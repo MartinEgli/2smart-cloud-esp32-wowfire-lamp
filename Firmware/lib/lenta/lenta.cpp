@@ -23,7 +23,7 @@ Lenta::Lenta(const char* name, const char* id, Device* device) : Node(name, id, 
         ls.quantity_ = kDefaultLedsQuantity_;
         kDefaultText_.toCharArray(ls.text_, kDefaultText_.length() + 1);
     }
-    if (!IsValidRotation(ls.rotation_)) ls.rotation_ = 0;
+    if (!IsValidRotation(ls.rotation_)) ls.rotation_ = kDefaultRotation_;
     if (ls.speed_ < 1 || ls.speed_ > 100) ls.speed_ = kDefaultSpeed_;
 
     leds_ptr_ = new CRGB[ls.quantity_];
@@ -319,7 +319,7 @@ void Lenta::PublishMode(uint8_t mode_num) {
 uint16_t Lenta::GetRotation() { return ls.rotation_; }
 
 void Lenta::SetRotation(uint16_t rotation) {
-    if (!IsValidRotation(rotation)) rotation = 0;
+    if (!IsValidRotation(rotation)) rotation = kDefaultRotation_;
     if (ls.rotation_ == rotation) return;
     ls.rotation_ = rotation;
 }

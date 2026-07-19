@@ -112,6 +112,7 @@ class Lenta : public Node {
     const uint8_t kDefaultColorG_ = 200;
     const uint8_t kDefaultColorB_ = 200;
     const uint8_t kDefaultSpeed_ = 50;
+    const uint16_t kDefaultRotation_ = 270;
     const uint16_t kDefaultLedsQuantity_ = length_ * width_;
     const uint16_t kSaveLentaSettingsTime_ = 5 * 1000;  // 5s
     String kDefaultText_ = "2Smart";
@@ -152,7 +153,7 @@ class Lenta : public Node {
     EncButton<EB_TICK, 19> button_;
 
     LsSettings ls = {
-        true, FIRE, kDefaultBrigthness_, kDefaultColorR_, kDefaultColorG_, kDefaultColorB_, kDefaultLedsQuantity_, "", 0,
+        true, FIRE, kDefaultBrigthness_, kDefaultColorR_, kDefaultColorG_, kDefaultColorB_, kDefaultLedsQuantity_, "", kDefaultRotation_,
         kDefaultSpeed_};
 
     // ====================================================================================================================
