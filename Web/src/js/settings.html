@@ -5,9 +5,11 @@
     let brightnessid;
     let speedid;
     let colorid;
+    let colorSettingRow;
     let rotationid;
     let settingsLoaded = false;
     let saveTimer;
+    const colorModes = ['color', 'parts', 'text'];
 
     window.onload = () => {
         relayid = document.getElementById('stateToggleid');
@@ -15,6 +17,7 @@
         brightnessid = document.getElementById('brightnessid');
         speedid = document.getElementById('speedid');
         colorid = document.getElementById('colorid');
+        colorSettingRow = document.getElementById('colorSettingRow');
         rotationid = document.getElementById('rotationid');
 
         bindAutoApply();
@@ -25,6 +28,7 @@
         relayid.onchange = () => saveSettings();
         modeid.onchange = () => {
             updateSelectedPreview(modeid.value);
+            updateVisibleParameters(modeid.value);
             saveSettings();
         };
         rotationid.onchange = () => saveSettings();
@@ -80,7 +84,18 @@
                 modeid.value = obj?.data?.mode;
             }
             fillModePreviews(options, modeid.value);
+            updateVisibleParameters(modeid.value);
             settingsLoaded = true;
+        }
+    }
+
+    function usesColor(mode) {
+        return colorModes.includes((mode || '').toLowerCase());
+    }
+
+    function updateVisibleParameters(mode) {
+        if (colorSettingRow) {
+            colorSettingRow.style.display = usesColor(mode) ? '' : 'none';
         }
     }
 
@@ -101,6 +116,7 @@
             button.onclick = () => {
                 modeid.value = mode;
                 updateSelectedPreview(mode);
+                updateVisibleParameters(mode);
                 saveSettings();
             };
 
