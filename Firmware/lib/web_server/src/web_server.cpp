@@ -92,16 +92,16 @@ void WebServer::SetupWebServer() {
         });
     });
 
-    server_->on("/static/favicon.6fe5638d.png", HTTP_GET,
-                [](AsyncWebServerRequest *request) { request->send(SPIFFS, "/static/favicon.6fe5638d.png",
+    server_->on("/favicon.6fe5638d.png", HTTP_GET,
+                [](AsyncWebServerRequest *request) { request->send(SPIFFS, "/favicon.6fe5638d.png",
                 "image/png"); });
 
-    server_->on("/logo.66f30bfe.svg", HTTP_GET,
-                [](AsyncWebServerRequest *request) { request->send(SPIFFS, "/static/logo.66f30bfe.svg",
+    server_->on("/logo.179daf42.svg", HTTP_GET,
+                [](AsyncWebServerRequest *request) { request->send(SPIFFS, "/logo.179daf42.svg",
                 "image/svg+xml"); });
 
-    server_->on("/styles.52d37503.css", HTTP_GET,
-                [](AsyncWebServerRequest *request) { request->send(SPIFFS, "/styles.52d37503.css", "text/css"); });
+    server_->on("/styles.0c63ba8d.css", HTTP_GET,
+                [](AsyncWebServerRequest *request) { request->send(SPIFFS, "/styles.0c63ba8d.css", "text/css"); });
 
     server_->on("/healthcheck", HTTP_GET,
                 [](AsyncWebServerRequest *request) { request->send(200, "text/html", "OK"); });

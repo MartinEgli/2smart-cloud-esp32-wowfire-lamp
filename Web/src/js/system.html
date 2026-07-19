@@ -21,8 +21,8 @@
                 body: formData
             })
             .then(response => {
-                    if (response.status === 200) alert('Firmware was successfully uploaded!');
-                    else alert(`Error!\n${response.statusText}`);
+                    if (response.status === 200) alert(t('alerts.firmwareUploaded'));
+                    else alert(`${t('alerts.error')}\n${response.statusText}`);
                 })
         });
     };
@@ -36,7 +36,7 @@
         let newPassword;
 
         while (true) {
-            newPassword = prompt("Input new password");
+            newPassword = prompt(t('alerts.newPassword'));
             if (newPassword == null || newPassword == "") return;
             else break;
         }
@@ -45,21 +45,21 @@
     }
 
 function reset() {
-    const res = confirm('Are you sure you want to reset your device to factory settings?');
+    const res = confirm(t('alerts.resetConfirm'));
     if (res) {
         request('resetdefault', { 
             method: 'GET',
-            onSuccess: () => alert('Settings have been reset successfully!')
+            onSuccess: () => alert(t('alerts.resetSuccess'))
         })
     }
 }
 
 function reboot() {
-    const res = confirm('Are you sure you want to reboot your device?');
+    const res = confirm(t('alerts.rebootConfirm'));
     if (res) {
         request('reboot', {
             method: 'GET',
-            onSuccess: () => alert('Rebooting...')
+            onSuccess: () => alert(t('alerts.rebooting'))
         })
     }
 }
@@ -81,11 +81,11 @@ function upload() {
         "application/x-macbinary"
     ];
     if (fileInput.length == 0) {
-        alert("No file selected!"); 
+        alert(t('alerts.fileRequired')); 
     } else if (fileInput[0].size > MAX_FILE_SIZE) {
-        alert(`File size must be less than ${MAX_FILE_SIZE_STR}!`);
+        alert(t('alerts.fileSize', { size: MAX_FILE_SIZE_STR }));
     } else if (!availableFormats.includes(fileInput[0].type)) {
-        alert(`File type must be '.bin'`);
+        alert(t('alerts.fileBin'));
     } else {
         document.getElementById('submitbtn').disabled = false;
         document.getElementById('submitbtn').classList.remove('disabledBtn');

@@ -66,7 +66,8 @@
             const cell3 = row.insertCell(2);
 
             cell1.innerHTML = item[0];
-            cell2.innerHTML = item[1]?.encType === '0' ? "OPEN" : "Secured";
+            cell2.dataset.open = item[1]?.encType === '0' ? "true" : "false";
+            cell2.innerHTML = cell2.dataset.open === "true" ? t('wifi.open') : t('wifi.secured');
             cell3.innerHTML = `${item[1]?.signal}%`;
         };
 
@@ -82,8 +83,8 @@
                         const ssid = cell.innerHTML;
                         let pass = "";
 
-                        if (cell2.innerHTML != "OPEN") {
-                            pass = prompt("Input password for " + ssid);
+                        if (cell2.dataset.open !== "true") {
+                            pass = prompt(t('alerts.inputPassword', { ssid }));
                             if(pass == null) return;
                         }
 

@@ -2,7 +2,7 @@
 <html>
     <head>
         <meta charset="utf-8">
-        <title>Credentials</title>
+        <title data-i18n="credentials.title">Credentials</title>
         <link rel="stylesheet" href="styles.css">
         <link rel="shortcut icon" href="static/favicon.png" type="image/x-icon">
     </head>
@@ -13,38 +13,38 @@
                 <div class="container">
                     <div class="card shadow my-5">
                         <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
-                            <h6 class="m-0 font-weight-bold text-primary">Credentials</h6>
+                            <h6 class="m-0 font-weight-bold text-primary" data-i18n="credentials.title">Credentials</h6>
                         </div>
                         <div class="card-body">
                             <div class="row mt-3">
-                                <span class="col-xs-12 col-sm-5 col-md-4 col-lg-3">Login *</span>
+                                <span class="col-xs-12 col-sm-5 col-md-4 col-lg-3" data-i18n="credentials.login">Login *</span>
                                 <input class="col-xs-12 col-sm-7 col-md-8 col-lg-9 form-control form-control-user" required type="text" id="mailid" value=%LOGIN%>
                             </div>
                             <div class="row mt-3">
-                                <span class="col-xs-12 col-sm-5 col-md-4 col-lg-3">Token *</span>
+                                <span class="col-xs-12 col-sm-5 col-md-4 col-lg-3" data-i18n="credentials.token">Token *</span>
                                 <input class="col-xs-12 col-sm-7 col-md-8 col-lg-9 form-control form-control-user" required type="text" id="tokenid" value=%TOKEN%></input>
                             </div>
-                            <button class="accordion mt-3" id="credentials">Advanced</button>
+                            <button class="accordion mt-3" id="credentials" data-i18n="credentials.advanced">Advanced</button>
                             <div class="advanced-panel">
                                 <div class="row mt-3">
-                                    <span class="col-xs-12 col-sm-5 col-md-4 col-lg-3">Hostname</span>
+                                    <span class="col-xs-12 col-sm-5 col-md-4 col-lg-3" data-i18n="credentials.hostname">Hostname</span>
                                     <input class="col-xs-12 col-sm-7 col-md-8 col-lg-9 form-control form-control-user" required type="text" id="hostnameid" value=%HOSTNAME%></input>
                                 </div>
                                 <div class="row mt-3">
-                                    <span class="col-xs-12 col-sm-5 col-md-4 col-lg-3">Broker port</span>
+                                    <span class="col-xs-12 col-sm-5 col-md-4 col-lg-3" data-i18n="credentials.brokerPort">Broker port</span>
                                     <input class="col-xs-12 col-sm-7 col-md-8 col-lg-9 form-control form-control-user" type="number" id="brokerportid" min="0" max="65535" step="0" value=%BRPORT%></input>
                                 </div>
                                 <div class="row mt-3">
-                                    <span class="col-xs-12 col-sm-5 col-md-4 col-lg-3">Product ID</span>
+                                    <span class="col-xs-12 col-sm-5 col-md-4 col-lg-3" data-i18n="credentials.productId">Product ID</span>
                                     <input class="col-xs-12 col-sm-7 col-md-8 col-lg-9 form-control form-control-user" type="text" id="productid" value=%PRODUCTID%></input>
                                 </div>
                                 <div class="row mt-3">
-                                    <span class="col-xs-12 col-sm-5 col-md-4 col-lg-3">Device ID</span>
+                                    <span class="col-xs-12 col-sm-5 col-md-4 col-lg-3" data-i18n="credentials.deviceId">Device ID</span>
                                     <input class="col-xs-12 col-sm-7 col-md-8 col-lg-9 form-control form-control-user" type="text" id="deviceid" value=%DEVICEID%></input>
                                 </div>
                             </div>
                             <div class="mt-5">
-                                <input type="button" class="btn btn-primary btn-user mr-2" id="btn_save" value="SAVE"></input>
+                                <input type="button" class="btn btn-primary btn-user mr-2" id="btn_save" value="SAVE" data-i18n-value="actions.saveUpper"></input>
                             </div>
                         </div>
                     </div>

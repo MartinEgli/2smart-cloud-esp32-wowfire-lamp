@@ -3,7 +3,7 @@
 
 <head>
     <meta charset="utf-8">
-    <title>Settings</title>
+    <title data-i18n="settings.title">Settings</title>
     <link rel="stylesheet" href="styles.css">
     <link rel="shortcut icon" href="static/favicon.png" type="image/x-icon">
 </head>
@@ -15,32 +15,32 @@
             <div class="container">
                 <div class="card shadow my-5">
                     <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
-                        <h6 class="m-0 font-weight-bold text-primary">Settings</h6>
+                        <h6 class="m-0 font-weight-bold text-primary" data-i18n="settings.title">Settings</h6>
                     </div>
                     <div class="card-body">
                         <div class="row mt-3">
-                            <span class="col-xs-12 col-sm-5 col-md-4 col-lg-3">State</span>
+                            <span class="col-xs-12 col-sm-5 col-md-4 col-lg-3" data-i18n="settings.state">State</span>
                             <label class="switch">
                                 <input type="checkbox" id="stateToggleid">
                                 <span class="slider round"></span>
                             </label>
                         </div>
                         <div class="row mt-3">
-                            <span class="col-xs-12 col-sm-5 col-md-4 col-lg-3">Color</span>
+                            <span class="col-xs-12 col-sm-5 col-md-4 col-lg-3" data-i18n="settings.color">Color</span>
                             <input type="color" id="colorid">
                         </div>
                         <div class="row mt-3">
-                            <span class="col-xs-12 col-sm-5 col-md-4 col-lg-3">Brightness</span>
+                            <span class="col-xs-12 col-sm-5 col-md-4 col-lg-3" data-i18n="settings.brightness">Brightness</span>
                             <input type="range" min="0" max="100" value="50" id="brightnessid">
                             <span class="range"></span>
                         </div>
                         <div class="row mt-3">
-                            <span class="col-xs-12 col-sm-5 col-md-4 col-lg-3">Mode</span>
+                            <span class="col-xs-12 col-sm-5 col-md-4 col-lg-3" data-i18n="settings.mode">Mode</span>
                             <select id="selectModeid">
                             </select>
                         </div>
                         <div class="saveSettingsBtn">
-                            <input type="button" value="Save" id="saveSettingsBtnid" class="btn btn-primary btn-user">
+                            <input type="button" value="Save" id="saveSettingsBtnid" class="btn btn-primary btn-user" data-i18n-value="actions.save">
                         </div>
                     </div>
                 </div>
