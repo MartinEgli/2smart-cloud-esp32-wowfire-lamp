@@ -88,9 +88,7 @@
                             if(pass == null) return;
                         }
 
-                        const params = `ssid=${ssid}&pass=${pass}`;
-
-                        request(`setwifi?${params}`, {method: 'GET'});
+                        request('setwifi', { method: 'POST', body: { ssid, pass } });
                     };	  
                 };
                 currentRow.onclick = createClickHandler(currentRow);

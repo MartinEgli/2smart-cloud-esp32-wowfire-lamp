@@ -14,7 +14,10 @@ WebServer::WebServer(Device *device) {
     server_ = new AsyncWebServer(kPort_);
 }
 
-void WebServer::Init() { SetupWebServer(); }
+void WebServer::Init() {
+    LoadWebAuthUsers(auth_users_, &auth_user_count_, http_username, web_auth_password);
+    SetupWebServer();
+}
 
 String WebServer::FillPlaceholders(const String &var) {
     Serial.println(var);
@@ -44,9 +47,19 @@ String WebServer::FillPlaceholders(const String &var) {
 }
 
 void WebServer::OnRequestWithAuth(AsyncWebServerRequest *request, ArRequestHandlerFunction onRequest) {
-    if (!request->authenticate(http_username, web_auth_password.c_str())) return request->requestAuthentication();
+    if (!AuthenticateWebUser(request, auth_users_, auth_user_count_)) return request->requestAuthentication();
 
     onRequest(request);
+}
+
+bool WebServer::HasRequestValue(AsyncWebServerRequest *request, const char *name) {
+    return request->hasParam(name) || request->hasParam(name, true);
+}
+
+String WebServer::GetRequestValue(AsyncWebServerRequest *request, const char *name) {
+    if (request->hasParam(name, true)) return request->getParam(name, true)->value();
+    if (request->hasParam(name)) return request->getParam(name)->value();
+    return "";
 }
 
 void WebServer::SetupWebServer() {
@@ -100,8 +113,8 @@ void WebServer::SetupWebServer() {
                 [](AsyncWebServerRequest *request) { request->send(SPIFFS, "/logo.179daf42.svg",
                 "image/svg+xml"); });
 
-    server_->on("/styles.0c63ba8d.css", HTTP_GET,
-                [](AsyncWebServerRequest *request) { request->send(SPIFFS, "/styles.0c63ba8d.css", "text/css"); });
+    server_->on("/styles.d51051dd.css", HTTP_GET,
+                [](AsyncWebServerRequest *request) { request->send(SPIFFS, "/styles.d51051dd.css", "text/css"); });
 
     server_->on("/healthcheck", HTTP_GET,
                 [](AsyncWebServerRequest *request) { request->send(200, "text/html", "OK"); });
@@ -126,14 +139,16 @@ void WebServer::SetupWebServer() {
         });
     });
 
-    server_->on("/newauthpass", HTTP_GET, [this](AsyncWebServerRequest *request) {
+    server_->on("/newauthpass", HTTP_ANY, [this](AsyncWebServerRequest *request) {
         OnRequestWithAuth(request, [this](AsyncWebServerRequest *request) {
-            if (!request->hasParam("newpass")) {
+            if (!HasRequestValue(request, "newpass")) {
                 request->send(400);
                 return;
             }
 
-            web_auth_password = request->getParam("newpass")->value();
+            web_auth_password = GetRequestValue(request, "newpass");
+            UpsertWebAuthUser(auth_users_, &auth_user_count_, http_username, web_auth_password);
+            SaveWebAuthUsers(auth_users_, auth_user_count_);
             if (!SaveConfig()) {
                 request->send(500, "text/plain", "Server error");
                 return;
@@ -145,15 +160,15 @@ void WebServer::SetupWebServer() {
         });
     });
 
-    server_->on("/setwifi", HTTP_GET, [this](AsyncWebServerRequest *request) {
+    server_->on("/setwifi", HTTP_ANY, [this](AsyncWebServerRequest *request) {
         OnRequestWithAuth(request, [this](AsyncWebServerRequest *request) {
-            if (!request->hasParam("ssid") || !request->hasParam("pass")) {
+            if (!HasRequestValue(request, "ssid") || !HasRequestValue(request, "pass")) {
                 request->send(400);
                 return;
             }
 
-            ssid_name = request->getParam("ssid")->value();
-            ssid_password = request->getParam("pass")->value();
+            ssid_name = GetRequestValue(request, "ssid");
+            ssid_password = GetRequestValue(request, "pass");
 
             if (!SaveConfig()) {
                 request->send(500, "text/plain", "Server error");
@@ -216,20 +231,70 @@ void WebServer::SetupWebServer() {
         });
     });
 
-    server_->on("/setcredentials", HTTP_GET, [this](AsyncWebServerRequest *request) {
+    server_->on("/auth/users", HTTP_GET, [this](AsyncWebServerRequest *request) {
         OnRequestWithAuth(request, [this](AsyncWebServerRequest *request) {
-            if (!request->hasParam("mail") || !request->hasParam("token") || !request->hasParam("hostname") ||
-                !request->hasParam("brokerPort") || !request->hasParam("productId") || !request->hasParam("deviceId")) {
+            DynamicJsonDocument doc(256);
+            JsonArray users = doc.createNestedArray("users");
+            for (uint8_t i = 0; i < auth_user_count_; i++) {
+                users.add(auth_users_[i].username);
+            }
+
+            String response;
+            serializeJson(doc, response);
+            request->send(200, "application/json", response);
+        });
+    });
+
+    server_->on("/auth/users", HTTP_POST, [this](AsyncWebServerRequest *request) {
+        OnRequestWithAuth(request, [this](AsyncWebServerRequest *request) {
+            if (!HasRequestValue(request, "username") || !HasRequestValue(request, "password")) {
                 request->send(400, "text/plain", "Incorrect data");
                 return;
             }
 
-            person_mail = request->getParam("mail")->value();
-            token = request->getParam("token")->value();
-            host = request->getParam("hostname")->value();
-            broker_port = request->getParam("brokerPort")->value();
-            product_id = request->getParam("productId")->value();
-            device_id = request->getParam("deviceId")->value();
+            if (!UpsertWebAuthUser(auth_users_, &auth_user_count_, GetRequestValue(request, "username"),
+                                   GetRequestValue(request, "password")) ||
+                !SaveWebAuthUsers(auth_users_, auth_user_count_)) {
+                request->send(400, "text/plain", "Unable to save user");
+                return;
+            }
+
+            request->send(200, "text/plain", "OK");
+        });
+    });
+
+    server_->on("/auth/users/delete", HTTP_POST, [this](AsyncWebServerRequest *request) {
+        OnRequestWithAuth(request, [this](AsyncWebServerRequest *request) {
+            if (!HasRequestValue(request, "username")) {
+                request->send(400, "text/plain", "Incorrect data");
+                return;
+            }
+
+            if (!DeleteWebAuthUser(auth_users_, &auth_user_count_, GetRequestValue(request, "username")) ||
+                !SaveWebAuthUsers(auth_users_, auth_user_count_)) {
+                request->send(400, "text/plain", "Unable to delete user");
+                return;
+            }
+
+            request->send(200, "text/plain", "OK");
+        });
+    });
+
+    server_->on("/setcredentials", HTTP_ANY, [this](AsyncWebServerRequest *request) {
+        OnRequestWithAuth(request, [this](AsyncWebServerRequest *request) {
+            if (!HasRequestValue(request, "mail") || !HasRequestValue(request, "token") ||
+                !HasRequestValue(request, "hostname") || !HasRequestValue(request, "brokerPort") ||
+                !HasRequestValue(request, "productId") || !HasRequestValue(request, "deviceId")) {
+                request->send(400, "text/plain", "Incorrect data");
+                return;
+            }
+
+            person_mail = GetRequestValue(request, "mail");
+            token = GetRequestValue(request, "token");
+            host = GetRequestValue(request, "hostname");
+            broker_port = GetRequestValue(request, "brokerPort");
+            product_id = GetRequestValue(request, "productId");
+            device_id = GetRequestValue(request, "deviceId");
             person_id = Sha256(person_mail);
 
             Serial.println(person_mail);

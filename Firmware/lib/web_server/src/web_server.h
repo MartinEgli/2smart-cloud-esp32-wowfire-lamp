@@ -4,6 +4,7 @@
 #include <Update.h>
 
 #include "homie.h"
+#include "web_auth.h"
 
 extern const char *http_username;
 
@@ -34,9 +35,13 @@ class WebServer {
     void OnFirmwareUpload(AsyncWebServerRequest *request, const String &filename, size_t index, uint8_t *data,
                           size_t len, bool final);
     void OnRequestWithAuth(AsyncWebServerRequest *request, ArRequestHandlerFunction onRequest);
+    String GetRequestValue(AsyncWebServerRequest *request, const char *name);
+    bool HasRequestValue(AsyncWebServerRequest *request, const char *name);
 
     String FillPlaceholders(const String &var);
 
     AsyncWebServer *server_ = nullptr;
     Device *device_ = nullptr;
+    WebAuthUser auth_users_[kMaxWebUsers] = {};
+    uint8_t auth_user_count_ = 0;
 };

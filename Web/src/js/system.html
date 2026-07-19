@@ -7,6 +7,8 @@
         document.getElementById('pwchange').onclick = pwchange;
         document.getElementById('reset').onclick = reset;
         document.getElementById('reboot').onclick = reboot;
+        document.getElementById('addUser').onclick = addUser;
+        getUsers();
 
         document.getElementById('submitbtn').disabled = true;
         document.getElementById('submitbtn').classList.add('disabledBtn');
@@ -40,8 +42,7 @@
             if (newPassword == null || newPassword == "") return;
             else break;
         }
-        const params = `newpass=${newPassword}`;
-        request(`newauthpass?${params}`, { method: 'GET' });
+        request('newauthpass', { method: 'POST', body: { newpass: newPassword } });
     }
 
 function reset() {
@@ -91,5 +92,58 @@ function upload() {
         document.getElementById('submitbtn').classList.remove('disabledBtn');
         document.getElementById('file-label').innerHTML = fileInput[0].name;
     }
+}
+
+function getUsers() {
+    request('auth/users', {
+        method: 'GET',
+        onSuccess: (response) => {
+            try {
+                fillUsersTable(JSON.parse(response).users || []);
+            } catch (e) {
+                console.error(e);
+            }
+        }
+    });
+}
+
+function fillUsersTable(users) {
+    const table = document.getElementById('usersTable');
+    for (let i = table.rows.length; i > 1; i--) table.deleteRow(i - 1);
+
+    users.forEach((username) => {
+        const row = table.insertRow(-1);
+        row.insertCell(0).innerHTML = username;
+        const actionCell = row.insertCell(1);
+        const button = document.createElement('a');
+        button.href = '#';
+        button.className = 'btn btn-warning system-btn';
+        button.innerHTML = t('actions.delete');
+        button.onclick = () => deleteUser(username);
+        actionCell.appendChild(button);
+    });
+}
+
+function addUser() {
+    const username = document.getElementById('newUsername').value.trim();
+    const password = document.getElementById('newUserPassword').value;
+
+    request('auth/users', {
+        method: 'POST',
+        body: { username, password },
+        onSuccess: () => {
+            document.getElementById('newUsername').value = '';
+            document.getElementById('newUserPassword').value = '';
+            getUsers();
+        }
+    });
+}
+
+function deleteUser(username) {
+    request('auth/users/delete', {
+        method: 'POST',
+        body: { username },
+        onSuccess: getUsers
+    });
 }
 </script>

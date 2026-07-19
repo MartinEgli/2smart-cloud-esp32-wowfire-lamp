@@ -40,8 +40,14 @@
             const res = confirm(t('alerts.applyChanges'));
             if (res) {
                 const credentials = getCredentials();
-                const params = `mail=${credentials.mail}&token=${credentials.token}&hostname=${credentials.hostname}&brokerPort=${credentials.brokerport}&productId=${credentials.productid}&deviceId=${credentials.deviceid}`;
-                request(`setcredentials?${params}`, {method: 'GET'});
+                request('setcredentials', {method: 'POST', body: {
+                    mail: credentials.mail,
+                    token: credentials.token,
+                    hostname: credentials.hostname,
+                    brokerPort: credentials.brokerport,
+                    productId: credentials.productid,
+                    deviceId: credentials.deviceid
+                }});
             }
         } catch (e) {
             console.error(e);
