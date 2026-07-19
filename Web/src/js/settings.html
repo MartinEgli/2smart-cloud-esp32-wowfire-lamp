@@ -11,7 +11,7 @@
     let rotationid;
     let settingsLoaded = false;
     let saveTimer;
-    const colorModes = ['color', 'parts', 'text'];
+    let modeMetadata = [];
 
     window.onload = () => {
         relayid = document.getElementById('stateToggleid');
@@ -55,16 +55,23 @@
         if (!settingsLoaded || !options?.length) return;
         clearTimeout(saveTimer);
         const relayState = relayid.checked ? 1 : 0;
-        const modeIndex = options.indexOf(modeid?.value?.trim());
-        const mode = modeIndex >= 0 ? modeIndex : 0;
+        const selectedMode = getModeInfo(modeid?.value);
+        const fallbackModeIndex = options.indexOf(modeid?.value?.trim());
+        const mode = selectedMode ? selectedMode.id : (fallbackModeIndex >= 0 ? fallbackModeIndex : 0);
         const color = hexToRgb(colorid.value).split(',');
-        const brightness = brightnessid?.value;
-        const speed = speedid?.value;
-        const rotation = rotationid?.value || 270;
-        const text = encodeURIComponent(textid?.value || '');
-        const data = `state=${relayState}&mode=${mode}&r=${color[0]}&g=${color[1]}&b=${color[2]}&brightness=${brightness}&rotation=${rotation}&speed=${speed}&text=${text}`;
+        const data = {
+            state: relayState,
+            mode,
+            r: color[0],
+            g: color[1],
+            b: color[2],
+            brightness: brightnessid?.value,
+            rotation: rotationid?.value || 270,
+            speed: speedid?.value,
+            text: textid?.value || ''
+        };
 
-        request(`update?${data}`, { method: 'GET', onSuccess: () => {} });
+        request('settings', { method: 'POST', body: data, onSuccess: () => {} });
     }
 
     function parseSettingsJSON(jsonstring) {
@@ -77,7 +84,8 @@
         if (speedid) speedid.value = obj?.data?.speed || 50;
         if (rotationid) rotationid.value = String(obj?.data?.rotation ?? 270);
         if (modeid) {
-            options = obj?.data?.states?.split(',');
+            modeMetadata = Array.isArray(obj?.data?.modes) ? obj.data.modes : [];
+            options = modeMetadata.length ? modeMetadata.map((mode) => mode.name) : obj?.data?.states?.split(',');
             const modeHint = document.getElementById('modeHint');
             if (modeHint && options?.length) modeHint.textContent = options.join(', ');
 
@@ -97,8 +105,29 @@
         }
     }
 
+    function getModeInfo(mode) {
+        const normalizedMode = (mode || '').toLowerCase();
+        return modeMetadata.find((item) => (item.name || '').toLowerCase() === normalizedMode);
+    }
+
     function usesColor(mode) {
-        return colorModes.includes((mode || '').toLowerCase());
+        const info = getModeInfo(mode);
+        return info ? !!info.usesColor : ['color', 'parts', 'text'].includes((mode || '').toLowerCase());
+    }
+
+    function usesText(mode) {
+        const info = getModeInfo(mode);
+        return info ? !!info.usesText : (mode || '').toLowerCase() === 'text';
+    }
+
+    function usesSpeed(mode) {
+        const info = getModeInfo(mode);
+        return !info || !!info.usesSpeed;
+    }
+
+    function usesRotation(mode) {
+        const info = getModeInfo(mode);
+        return !info || !!info.usesRotation;
     }
 
     function updateVisibleParameters(mode) {
@@ -106,7 +135,13 @@
             colorSettingRow.style.display = usesColor(mode) ? '' : 'none';
         }
         if (textSettingRow) {
-            textSettingRow.style.display = (mode || '').toLowerCase() === 'text' ? '' : 'none';
+            textSettingRow.style.display = usesText(mode) ? '' : 'none';
+        }
+        if (speedid?.closest('.row')) {
+            speedid.closest('.row').style.display = usesSpeed(mode) ? '' : 'none';
+        }
+        if (rotationid?.closest('.row')) {
+            rotationid.closest('.row').style.display = usesRotation(mode) ? '' : 'none';
         }
     }
 
