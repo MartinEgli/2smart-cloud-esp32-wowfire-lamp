@@ -181,9 +181,22 @@
     function locationDetector() {
         const pathname = window.location.pathname.replace(/^\//, '') || 'index.html';
         const header = document.getElementById('header');
-        const el = header.querySelectorAll(`a[href$="${pathname}"]`);
+        if (!header) return;
 
-        if (el.length) el[0].classList.add('bold');
+        header.querySelectorAll('a[data-page]').forEach((link) => {
+            const page = link.dataset.page;
+            link.href = page;
+            link.onclick = (event) => {
+                event.preventDefault();
+                window.location.assign(page);
+            };
+
+            if (page === pathname || (pathname === '' && page === 'index.html')) {
+                link.classList.add('bold');
+            } else {
+                link.classList.remove('bold');
+            }
+        });
     }
 
     function request(url, { method, body, onSuccess, onError }) {
