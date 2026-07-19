@@ -113,8 +113,8 @@ void WebServer::SetupWebServer() {
                 [](AsyncWebServerRequest *request) { request->send(SPIFFS, "/logo.179daf42.svg",
                 "image/svg+xml"); });
 
-    server_->on("/styles.d51051dd.css", HTTP_GET,
-                [](AsyncWebServerRequest *request) { request->send(SPIFFS, "/styles.d51051dd.css", "text/css"); });
+    server_->on("/styles.c28e9742.css", HTTP_GET,
+                [](AsyncWebServerRequest *request) { request->send(SPIFFS, "/styles.c28e9742.css", "text/css"); });
 
     server_->on("/healthcheck", HTTP_GET,
                 [](AsyncWebServerRequest *request) { request->send(200, "text/html", "OK"); });
