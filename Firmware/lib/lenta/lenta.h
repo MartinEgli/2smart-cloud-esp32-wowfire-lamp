@@ -48,6 +48,7 @@ class Lenta : public Node {
     String GetModes();
 
     void PublishMode(uint8_t mode_num);
+    uint16_t GetRotation();
 
  private:
     typedef struct {
@@ -59,9 +60,10 @@ class Lenta : public Node {
         uint8_t blue_;
         uint16_t quantity_;
         char text_[TEXT_MAX_LENGTH];
+        uint16_t rotation_;
     } LsSettings;
 
-    enum LsNewState { NO_CHANGES, NEW_COLOR, NEW_BRIGHTNESS, NEW_MODE, NEW_TEXT };
+    enum LsNewState { NO_CHANGES, NEW_COLOR, NEW_BRIGHTNESS, NEW_MODE, NEW_TEXT, NEW_ROTATION };
     enum LedStripStates {
         RAINBOW,
         COLOR,
@@ -89,6 +91,7 @@ class Lenta : public Node {
     void DNAroutine();
     void TextRunning();
     void ExtractColor(String color_string);
+    void SetRotation(uint16_t rotation);
 
     bool SaveLentaSettings();
     bool LoadLentaSettings();
@@ -141,7 +144,7 @@ class Lenta : public Node {
     EncButton<EB_TICK, 19> button_;
 
     LsSettings ls = {
-        true, FIRE, kDefaultBrigthness_, kDefaultColorR_, kDefaultColorG_, kDefaultColorB_, kDefaultLedsQuantity_};
+        true, FIRE, kDefaultBrigthness_, kDefaultColorR_, kDefaultColorG_, kDefaultColorB_, kDefaultLedsQuantity_, "", 0};
 
     // ====================================================================================================================
 

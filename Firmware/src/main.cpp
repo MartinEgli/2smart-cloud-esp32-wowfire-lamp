@@ -35,6 +35,7 @@ void setup() {
     Property *lenta_brightness =
         new Property("brightness", "brightness", lenta, SENSOR, true, true, "integer", "0:100");
     Property *lenta_text = new Property("text", "text", lenta, SENSOR, true, true, "string", "#");
+    Property *lenta_rotation = new Property("rotation", "rotation", lenta, SENSOR, true, true, "enum", "0,90,180,270");
 
     /* -------------------- End init your nodes and properties --------------------*/
 

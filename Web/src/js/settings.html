@@ -9,6 +9,7 @@
         modeid = document.getElementById('selectModeid');
         brightnessid = document.getElementById('brightnessid');
         colorid = document.getElementById('colorid');
+        rotationid = document.getElementById('rotationid');
         saveSettingsBtnid = document.getElementById('saveSettingsBtnid');
         saveSettingsBtnid.onclick = saveSettings;
     }
@@ -18,7 +19,8 @@
         const mode = options.indexOf(modeid?.value?.trim()) || 0;
         const color = hexToRgb(colorid.value).split(',');
         const brightness = brightnessid?.value;
-        const data = `state=${relayState}&mode=${mode}&r=${color[0]}&g=${color[1]}&b=${color[2]}&brightness=${brightness}`;
+        const rotation = rotationid?.value || 0;
+        const data = `state=${relayState}&mode=${mode}&r=${color[0]}&g=${color[1]}&b=${color[2]}&brightness=${brightness}&rotation=${rotation}`;
 
         request(`update?${data}`, { method: 'GET' });
     }
@@ -29,6 +31,7 @@
         if (modeid) modeid.value = obj?.data?.mode;
         if (colorid) colorid.value = rgbToHex(obj?.data?.color) || '#035F59';
         if (brightnessid) brightnessid.value = obj?.data?.brightness;
+        if (rotationid) rotationid.value = String(obj?.data?.rotation || 0);
         if (modeid) {
             options = obj?.data?.states?.split(',');
 

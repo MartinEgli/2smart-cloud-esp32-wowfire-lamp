@@ -382,6 +382,11 @@ void WebServer::SetupWebServer() {
             property = node->GetProperty("color");
             property->SetValue(message_buffer);
 
+            if (request->hasParam("rotation")) {
+                property = node->GetProperty("rotation");
+                property->SetValue(request->getParam("rotation")->value());
+            }
+
             request->send(200, "text/plain", "OK");
         });
     });
@@ -400,6 +405,8 @@ void WebServer::SetupWebServer() {
             doc["data"]["mode"] = property->GetValue();
             property = node->GetProperty("color");
             doc["data"]["color"] = property->GetValue();
+            property = node->GetProperty("rotation");
+            doc["data"]["rotation"] = property->GetValue().toInt();
 
             doc["data"]["states"] = node->GetModes();
             String response;

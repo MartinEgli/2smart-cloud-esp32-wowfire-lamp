@@ -8,6 +8,10 @@
 
 timerMillis effTmr(100, true);
 
+static bool IsValidRotation(uint16_t rotation) {
+    return rotation == 0 || rotation == 90 || rotation == 180 || rotation == 270;
+}
+
 Lenta::Lenta(const char* name, const char* id, Device* device) : Node(name, id, device) {
     if (!ReadSettings("/lentaconf.txt", reinterpret_cast<byte*>(&ls), sizeof(ls))) {
         ls.brightness_ = kDefaultBrigthness_;
@@ -19,6 +23,7 @@ Lenta::Lenta(const char* name, const char* id, Device* device) : Node(name, id, 
         ls.quantity_ = kDefaultLedsQuantity_;
         kDefaultText_.toCharArray(ls.text_, kDefaultText_.length() + 1);
     }
+    if (!IsValidRotation(ls.rotation_)) ls.rotation_ = 0;
 
     leds_ptr_ = new CRGB[ls.quantity_];
     FastLED.addLeds<WS2812, DATA_PIN, GRB>(leds_ptr_, ls.quantity_).setCorrection(TypicalLEDStrip);
@@ -112,6 +117,11 @@ void Lenta::HandleCurrentState() {
         properties_.find("text")->second->SetValue(ls.text_);  // update value after validation
         properties_.find("text")->second->SetHasNewValue(false);
         new_ls_state_ = NEW_TEXT;
+    }
+    if (properties_.find("rotation")->second->HasNewValue()) {
+        SetRotation(properties_.find("rotation")->second->GetValue().toInt());
+        properties_.find("rotation")->second->SetHasNewValue(false);
+        new_ls_state_ = NEW_ROTATION;
     }
 
     switch (new_ls_state_) {
@@ -260,6 +270,9 @@ bool Lenta::LoadLentaSettings() {
     properties_.find("text")->second->SetValue(String(ls.text_));
     properties_.find("text")->second->SetHasNewValue(false);
 
+    properties_.find("rotation")->second->SetValue(String(ls.rotation_));
+    properties_.find("rotation")->second->SetHasNewValue(false);
+
     return true;
 }
 
@@ -268,6 +281,14 @@ void Lenta::PublishMode(uint8_t mode_num) {
     ls.mode_ = mode_num;
     String state_in_string = modes_.find(ls.mode_)->second;
     properties_.find("mode")->second->SetValue(state_in_string);
+}
+
+uint16_t Lenta::GetRotation() { return ls.rotation_; }
+
+void Lenta::SetRotation(uint16_t rotation) {
+    if (!IsValidRotation(rotation)) rotation = 0;
+    if (ls.rotation_ == rotation) return;
+    ls.rotation_ = rotation;
 }
 
 bool Lenta::SaveLentaSettings() { return WriteSettings("/lentaconf.txt", reinterpret_cast<byte*>(&ls), sizeof(ls)); }
@@ -336,6 +357,23 @@ uint16_t Lenta::getPix(int x, int y) {
 
     thisX = x;
     thisY = y;
+
+    switch (ls.rotation_) {
+        case 90:
+            thisX = width_ - 1 - y;
+            thisY = x;
+            break;
+        case 180:
+            thisX = width_ - 1 - x;
+            thisY = length_ - 1 - y;
+            break;
+        case 270:
+            thisX = y;
+            thisY = length_ - 1 - x;
+            break;
+        default:
+            break;
+    }
 
     if (!(thisY & 1))
         return (thisY * matrixW + thisX);  // even line
@@ -501,7 +539,7 @@ void Lenta::WuPixel(uint32_t x, uint32_t y, CRGB* col) {  // awesome WuPixel pro
     uint8_t wu[4] = {WU_WEIGHT(ix, iy), WU_WEIGHT(xx, iy), WU_WEIGHT(ix, yy), WU_WEIGHT(xx, yy)};
     // multiply the intensities by the colour, and saturating-add them to the pixels
     for (uint8_t i = 0; i < 4; i++) {
-        uint16_t xy = (x >> 8) + (i & 1) + (((y >> 8) + ((i >> 1) & 1)) * 16);
+        uint16_t xy = getPix((x >> 8) + (i & 1), (y >> 8) + ((i >> 1) & 1));
         if (xy < kDefaultLedsQuantity_) {
             leds_ptr_[xy].r = qadd8(leds_ptr_[xy].r, col->r * wu[i] >> 8);
             leds_ptr_[xy].g = qadd8(leds_ptr_[xy].g, col->g * wu[i] >> 8);
