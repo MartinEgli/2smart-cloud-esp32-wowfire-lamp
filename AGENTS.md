@@ -27,3 +27,12 @@ Useful initialization prompt:
 ```text
 Use granular-git-flow init-project for this repo.
 ```
+
+Project validation commands:
+
+- Firmware build: `python -m platformio run -e esp32dev` from `Firmware/`.
+- Firmware static analysis: `python -m platformio check -e esp32dev` from `Firmware/`.
+- Web UI build: `npm run build` from `Web/`.
+
+Do not flash firmware, upload SPIFFS data, or open a serial monitor as a
+pre-commit validation step unless the user explicitly asks for hardware work.
