@@ -13,6 +13,7 @@ static bool IsValidRotation(uint16_t rotation) {
 }
 
 Lenta::Lenta(const char* name, const char* id, Device* device) : Node(name, id, device) {
+    bool settings_changed = false;
     if (!ReadSettings("/lentaconf.txt", reinterpret_cast<byte*>(&ls), sizeof(ls))) {
         ls.brightness_ = kDefaultBrigthness_;
         ls.state_ = true;
@@ -21,10 +22,20 @@ Lenta::Lenta(const char* name, const char* id, Device* device) : Node(name, id, 
         ls.green_ = kDefaultColorG_;
         ls.blue_ = kDefaultColorB_;
         ls.quantity_ = kDefaultLedsQuantity_;
+        ls.rotation_ = kDefaultRotation_;
+        ls.speed_ = kDefaultSpeed_;
         kDefaultText_.toCharArray(ls.text_, kDefaultText_.length() + 1);
+        settings_changed = true;
     }
-    if (!IsValidRotation(ls.rotation_)) ls.rotation_ = kDefaultRotation_;
-    if (ls.speed_ < 1 || ls.speed_ > 100) ls.speed_ = kDefaultSpeed_;
+    if (!IsValidRotation(ls.rotation_) || ls.rotation_ == kPreviousDefaultRotation_) {
+        ls.rotation_ = kDefaultRotation_;
+        settings_changed = true;
+    }
+    if (ls.speed_ < 1 || ls.speed_ > 100) {
+        ls.speed_ = kDefaultSpeed_;
+        settings_changed = true;
+    }
+    if (settings_changed) SaveLentaSettings();
 
     leds_ptr_ = new CRGB[ls.quantity_];
     FastLED.addLeds<WS2812, DATA_PIN, GRB>(leds_ptr_, ls.quantity_).setCorrection(TypicalLEDStrip);
