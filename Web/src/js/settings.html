@@ -50,7 +50,52 @@
             if(obj?.data?.mode) {
                 modeid.value = obj?.data?.mode;
             }
+            fillModePreviews(options, modeid.value);
+            modeid.onchange = () => updateSelectedPreview(modeid.value);
         }
+    }
+
+    function modeClass(mode) {
+        return `mode-${mode.toLowerCase().replace(/[^a-z0-9]+/g, '-')}`;
+    }
+
+    function fillModePreviews(modes, selectedMode) {
+        const grid = document.getElementById('modePreviewGrid');
+        if (!grid || !modes?.length) return;
+        grid.innerHTML = '';
+
+        modes.forEach((mode) => {
+            const button = document.createElement('button');
+            button.type = 'button';
+            button.className = `mode-preview ${modeClass(mode)}`;
+            button.dataset.mode = mode;
+            button.onclick = () => {
+                modeid.value = mode;
+                updateSelectedPreview(mode);
+            };
+
+            const sample = document.createElement('span');
+            sample.className = 'mode-preview-sample';
+            for (let i = 0; i < 16; i++) {
+                sample.appendChild(document.createElement('i'));
+            }
+
+            const label = document.createElement('span');
+            label.className = 'mode-preview-label';
+            label.textContent = mode;
+
+            button.appendChild(sample);
+            button.appendChild(label);
+            grid.appendChild(button);
+        });
+
+        updateSelectedPreview(selectedMode);
+    }
+
+    function updateSelectedPreview(selectedMode) {
+        document.querySelectorAll('.mode-preview').forEach((preview) => {
+            preview.classList.toggle('selected', preview.dataset.mode === selectedMode);
+        });
     }
 
     function getSettingsJSON() {

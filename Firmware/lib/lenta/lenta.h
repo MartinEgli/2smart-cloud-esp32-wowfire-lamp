@@ -77,7 +77,8 @@ class Lenta : public Node {
         DNA,
         TEXT,
         ICE_FIRE,
-        FOREST_FIRE
+        FOREST_FIRE,
+        BARBER
     };
 
     void TurnOffLs();
@@ -91,6 +92,7 @@ class Lenta : public Node {
     void Matrix();
     void DNAroutine();
     void TextRunning();
+    void Barber();
     void ExtractColor(String color_string);
     void SetRotation(uint16_t rotation);
     void SetSpeed(uint8_t speed);
@@ -143,7 +145,8 @@ class Lenta : public Node {
         {DNA, "DNA"},
         {TEXT, "text"},
         {ICE_FIRE, "ice fire"},
-        {FOREST_FIRE, "forest fire"}
+        {FOREST_FIRE, "forest fire"},
+        {BARBER, "barber"}
     };
 
     EncButton<EB_TICK, 19> button_;

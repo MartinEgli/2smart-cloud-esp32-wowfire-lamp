@@ -179,6 +179,9 @@ void Lenta::HandleCurrentState() {
             case FOREST_FIRE:
                 Fire(scale_, length_, GREEN_FIRE_MODE);
                 break;
+            case BARBER:
+                Barber();
+                break;
         }
     } else if (new_ls_state_) {
         TurnOffLs();
@@ -244,6 +247,26 @@ void Lenta::Disco() {
     }
     LEDS.show();
     delay(map(ls.speed_, 1, 100, random_delay * 2, 1));
+}
+
+void Lenta::Barber() {
+    if (!effTmr.isReady()) return;
+
+    for (uint8_t x = 0; x < width_; x++) {
+        for (uint8_t y = 0; y < length_; y++) {
+            uint8_t stripe = (x + y + counter_) % 9;
+            if (stripe < 3) {
+                setPix(x, y, CRGB::White);
+            } else if (stripe < 6) {
+                setPix(x, y, CRGB::Red);
+            } else {
+                setPix(x, y, CRGB::Blue);
+            }
+        }
+    }
+
+    counter_++;
+    FastLED.show();
 }
 
 String Lenta::GetModes() {
