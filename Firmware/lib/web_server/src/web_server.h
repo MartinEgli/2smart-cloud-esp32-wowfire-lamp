@@ -35,6 +35,9 @@ class WebServer {
     void OnFirmwareUpload(AsyncWebServerRequest *request, const String &filename, size_t index, uint8_t *data,
                           size_t len, bool final);
     void OnRequestWithAuth(AsyncWebServerRequest *request, ArRequestHandlerFunction onRequest);
+    bool ApplyLentaSettings(AsyncWebServerRequest *request);
+    void SendLentaSettings(AsyncWebServerRequest *request);
+    bool TryServeStaticAsset(AsyncWebServerRequest *request);
     String GetRequestValue(AsyncWebServerRequest *request, const char *name);
     bool HasRequestValue(AsyncWebServerRequest *request, const char *name);
 

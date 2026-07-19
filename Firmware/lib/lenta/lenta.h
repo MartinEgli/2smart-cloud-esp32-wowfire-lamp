@@ -45,7 +45,17 @@ class Lenta : public Node {
 
     void HandleCurrentState();
 
+    struct ModeMetadata {
+        const char* name;
+        bool uses_color;
+        bool uses_text;
+        bool uses_speed;
+        bool uses_rotation;
+    };
+
     String GetModes();
+    const std::map<uint8_t, ModeMetadata>& GetModeMetadata() const;
+    bool IsValidMode(uint8_t mode_num) const;
 
     void PublishMode(uint8_t mode_num);
     uint16_t GetRotation();
@@ -63,6 +73,11 @@ class Lenta : public Node {
         uint16_t rotation_;
         uint8_t speed_;
     } LsSettings;
+
+    typedef struct {
+        uint8_t version_;
+        LsSettings settings_;
+    } VersionedLsSettings;
 
     enum LsNewState { NO_CHANGES, NEW_COLOR, NEW_BRIGHTNESS, NEW_MODE, NEW_TEXT, NEW_ROTATION, NEW_SPEED };
     enum LedStripStates {
@@ -114,6 +129,9 @@ class Lenta : public Node {
     const uint8_t kDefaultSpeed_ = 50;
     const uint16_t kDefaultRotation_ = 270;
     const uint16_t kPreviousDefaultRotation_ = 0;
+    const uint8_t kLentaSettingsVersion_ = 2;
+    const char* kLentaSettingsPath_ = "/lentaconf2.txt";
+    const char* kLegacyLentaSettingsPath_ = "/lentaconf.txt";
     const uint16_t kDefaultLedsQuantity_ = length_ * width_;
     const uint16_t kSaveLentaSettingsTime_ = 5 * 1000;  // 5s
     String kDefaultText_ = "2Smart";
@@ -135,20 +153,20 @@ class Lenta : public Node {
     int16_t offset = width_;
     uint32_t scrollTimer = 0LL;
 
-    std::map<uint8_t, String> modes_ = {
-        {RAINBOW, "rainbow"},
-        {COLOR, "color"},
-        {DISCO, "disco"},
-        {FIRE, "fire"},
-        {PARTS, "parts"},
-        {KONFETTI, "konfetti"},
-        {HAMELEON, "hameleon"},
-        {MATRIX, "matrix"},
-        {DNA, "DNA"},
-        {TEXT, "text"},
-        {ICE_FIRE, "ice fire"},
-        {FOREST_FIRE, "forest fire"},
-        {BARBER, "barber"}
+    std::map<uint8_t, ModeMetadata> modes_ = {
+        {RAINBOW, {"rainbow", false, false, true, true}},
+        {COLOR, {"color", true, false, false, true}},
+        {DISCO, {"disco", false, false, true, true}},
+        {FIRE, {"fire", false, false, true, true}},
+        {PARTS, {"parts", true, false, true, true}},
+        {KONFETTI, {"konfetti", false, false, true, true}},
+        {HAMELEON, {"hameleon", false, false, true, true}},
+        {MATRIX, {"matrix", false, false, true, true}},
+        {DNA, {"DNA", false, false, true, true}},
+        {TEXT, {"text", true, true, true, true}},
+        {ICE_FIRE, {"ice fire", false, false, true, true}},
+        {FOREST_FIRE, {"forest fire", false, false, true, true}},
+        {BARBER, {"barber", false, false, true, true}}
     };
 
     EncButton<EB_TICK, 19> button_;

@@ -7,6 +7,38 @@
 #include "lenta.h"
 #include "utils/src/utils.h"
 
+static bool ParseUintInRange(const String &value, uint16_t min_value, uint16_t max_value, uint16_t *result) {
+    if (!result || value.length() == 0) return false;
+    for (uint16_t i = 0; i < value.length(); i++) {
+        if (!isDigit(value[i])) return false;
+    }
+    uint32_t parsed = value.toInt();
+    if (parsed < min_value || parsed > max_value) return false;
+    *result = parsed;
+    return true;
+}
+
+static bool ParseStateValue(const String &value, bool *result) {
+    if (!result) return false;
+    if (value == "1" || value == "true") {
+        *result = true;
+        return true;
+    }
+    if (value == "0" || value == "false") {
+        *result = false;
+        return true;
+    }
+    return false;
+}
+
+static const char *GetStaticContentType(const String &path) {
+    if (path.endsWith(".css")) return "text/css";
+    if (path.endsWith(".png")) return "image/png";
+    if (path.endsWith(".svg")) return "image/svg+xml";
+    if (path.endsWith(".js")) return "application/javascript";
+    return "application/octet-stream";
+}
+
 WebServer::WebServer(Device *device) {
     device_ = device;
     // cppcheck-suppress noCopyConstructor
@@ -62,6 +94,131 @@ String WebServer::GetRequestValue(AsyncWebServerRequest *request, const char *na
     return "";
 }
 
+bool WebServer::TryServeStaticAsset(AsyncWebServerRequest *request) {
+    String path = request->url();
+    if (path.indexOf("..") >= 0) return false;
+
+    bool is_supported_asset = (path.startsWith("/styles.") && path.endsWith(".css")) ||
+                              (path.startsWith("/favicon.") && path.endsWith(".png")) ||
+                              (path.startsWith("/logo.") && path.endsWith(".svg"));
+    if (!is_supported_asset || !SPIFFS.exists(path)) return false;
+
+    request->send(SPIFFS, path, GetStaticContentType(path));
+    return true;
+}
+
+bool WebServer::ApplyLentaSettings(AsyncWebServerRequest *request) {
+    const char *required_fields[] = {"state", "brightness", "mode", "r", "g", "b"};
+    for (uint8_t i = 0; i < 6; i++) {
+        if (!HasRequestValue(request, required_fields[i])) {
+            request->send(400, "text/plain", "Missing setting");
+            return false;
+        }
+    }
+
+    bool state = false;
+    uint16_t brightness = 0;
+    uint16_t mode = 0;
+    uint16_t red = 0;
+    uint16_t green = 0;
+    uint16_t blue = 0;
+
+    Lenta *node = static_cast<Lenta *>(device_->GetNode("lenta"));
+    if (!node || !ParseStateValue(GetRequestValue(request, "state"), &state) ||
+        !ParseUintInRange(GetRequestValue(request, "brightness"), 0, 100, &brightness) ||
+        !ParseUintInRange(GetRequestValue(request, "mode"), 0, 255, &mode) || !node->IsValidMode(mode) ||
+        !ParseUintInRange(GetRequestValue(request, "r"), 0, 255, &red) ||
+        !ParseUintInRange(GetRequestValue(request, "g"), 0, 255, &green) ||
+        !ParseUintInRange(GetRequestValue(request, "b"), 0, 255, &blue)) {
+        request->send(400, "text/plain", "Invalid setting");
+        return false;
+    }
+
+    if (HasRequestValue(request, "rotation")) {
+        uint16_t rotation = 0;
+        if (!ParseUintInRange(GetRequestValue(request, "rotation"), 0, 270, &rotation) ||
+            !(rotation == 0 || rotation == 90 || rotation == 180 || rotation == 270)) {
+            request->send(400, "text/plain", "Invalid rotation");
+            return false;
+        }
+    }
+
+    if (HasRequestValue(request, "speed")) {
+        uint16_t speed = 0;
+        if (!ParseUintInRange(GetRequestValue(request, "speed"), 1, 100, &speed)) {
+            request->send(400, "text/plain", "Invalid speed");
+            return false;
+        }
+    }
+
+    Property *property = node->GetProperty("brightness");
+    property->SetValue(String(brightness));
+
+    node->PublishMode(mode);
+
+    property = node->GetProperty("state");
+    property->SetValue(state ? "true" : "false");
+
+    char message_buffer[12];
+    snprintf(message_buffer, sizeof(message_buffer), "%d,%d,%d", red, green, blue);
+    property = node->GetProperty("color");
+    property->SetValue(message_buffer);
+
+    if (HasRequestValue(request, "rotation")) {
+        property = node->GetProperty("rotation");
+        property->SetValue(GetRequestValue(request, "rotation"));
+    }
+    if (HasRequestValue(request, "speed")) {
+        property = node->GetProperty("speed");
+        property->SetValue(GetRequestValue(request, "speed"));
+    }
+    if (HasRequestValue(request, "text")) {
+        property = node->GetProperty("text");
+        property->SetValue(GetRequestValue(request, "text"));
+    }
+
+    request->send(200, "text/plain", "OK");
+    return true;
+}
+
+void WebServer::SendLentaSettings(AsyncWebServerRequest *request) {
+    Serial.println("in settings");
+    Lenta *node = static_cast<Lenta *>(device_->GetNode("lenta"));
+    Property *property = node->GetProperty("brightness");
+    StaticJsonDocument<1536> doc;
+
+    doc["data"]["brightness"] = property->GetValue().toInt();
+    property = node->GetProperty("state");
+    doc["data"]["state"] = property->GetValue() == "true";
+    property = node->GetProperty("mode");
+    doc["data"]["mode"] = property->GetValue();
+    property = node->GetProperty("color");
+    doc["data"]["color"] = property->GetValue();
+    property = node->GetProperty("rotation");
+    doc["data"]["rotation"] = property->GetValue().toInt();
+    property = node->GetProperty("speed");
+    doc["data"]["speed"] = property->GetValue().toInt();
+    property = node->GetProperty("text");
+    doc["data"]["text"] = property->GetValue();
+
+    doc["data"]["states"] = node->GetModes();
+    JsonArray modes = doc["data"].createNestedArray("modes");
+    for (const auto &item : node->GetModeMetadata()) {
+        JsonObject mode = modes.createNestedObject();
+        mode["id"] = item.first;
+        mode["name"] = item.second.name;
+        mode["usesColor"] = item.second.uses_color;
+        mode["usesText"] = item.second.uses_text;
+        mode["usesSpeed"] = item.second.uses_speed;
+        mode["usesRotation"] = item.second.uses_rotation;
+    }
+
+    String response;
+    serializeJson(doc, response);
+    Serial.println(response);
+    request->send(200, "application/json", response);
+}
+
 void WebServer::SetupWebServer() {
     server_->on("/", HTTP_GET, [this](AsyncWebServerRequest *request) {
         OnRequestWithAuth(request, [this](AsyncWebServerRequest *request) {
@@ -104,17 +261,6 @@ void WebServer::SetupWebServer() {
                           [this](const String &var) { return FillPlaceholders(var); });
         });
     });
-
-    server_->on("/favicon.6fe5638d.png", HTTP_GET,
-                [](AsyncWebServerRequest *request) { request->send(SPIFFS, "/favicon.6fe5638d.png",
-                "image/png"); });
-
-    server_->on("/logo.179daf42.svg", HTTP_GET,
-                [](AsyncWebServerRequest *request) { request->send(SPIFFS, "/logo.179daf42.svg",
-                "image/svg+xml"); });
-
-    server_->on("/styles.2c655d7d.css", HTTP_GET,
-                [](AsyncWebServerRequest *request) { request->send(SPIFFS, "/styles.2c655d7d.css", "text/css"); });
 
     server_->on("/healthcheck", HTTP_GET,
                 [](AsyncWebServerRequest *request) { request->send(200, "text/html", "OK"); });
@@ -359,72 +505,19 @@ void WebServer::SetupWebServer() {
 
     server_->on("/update", HTTP_GET, [this](AsyncWebServerRequest *request) {
         OnRequestWithAuth(request, [this](AsyncWebServerRequest *request) {
-            if (!request->hasParam("state") || !request->hasParam("brightness") || !request->hasParam("mode") ||
-                !request->hasParam("r") || !request->hasParam("g") || !request->hasParam("b")) {
-                request->send(400);
-                return;
-            }
-            Lenta *node = static_cast<Lenta *>(device_->GetNode("lenta"));
-            Property *property = node->GetProperty("brightness");
-            property->SetValue(request->getParam("brightness")->value());
-
-            node->PublishMode(request->getParam("mode")->value().toInt());
-            property = node->GetProperty("state");
-            property->SetValue(request->getParam("state")->value().toInt() ? "true" : "false");
-
-            uint8_t r_value = request->getParam("r")->value().toInt();
-            uint8_t g_value = request->getParam("g")->value().toInt();
-            uint8_t b_value = request->getParam("b")->value().toInt();
-
-            char message_buffer[12];  // length of RGB mess
-
-            snprintf(message_buffer, sizeof(message_buffer), "%d,%d,%d", r_value, g_value, b_value);
-            property = node->GetProperty("color");
-            property->SetValue(message_buffer);
-
-            if (request->hasParam("rotation")) {
-                property = node->GetProperty("rotation");
-                property->SetValue(request->getParam("rotation")->value());
-            }
-            if (request->hasParam("speed")) {
-                property = node->GetProperty("speed");
-                property->SetValue(request->getParam("speed")->value());
-            }
-            if (request->hasParam("text")) {
-                property = node->GetProperty("text");
-                property->SetValue(request->getParam("text")->value());
-            }
-
-            request->send(200, "text/plain", "OK");
+            ApplyLentaSettings(request);
         });
     });
 
     server_->on("/settings", HTTP_GET, [this](AsyncWebServerRequest *request) {
         OnRequestWithAuth(request, [this](AsyncWebServerRequest *request) {
-            Serial.println("in settings");
-            Lenta *node = static_cast<Lenta *>(device_->GetNode("lenta"));
-            Property *property = node->GetProperty("brightness");
-            StaticJsonDocument<384> doc;
+            SendLentaSettings(request);
+        });
+    });
 
-            doc["data"]["brightness"] = property->GetValue().toInt();
-            property = node->GetProperty("state");
-            doc["data"]["state"] = property->GetValue() == "true";
-            property = node->GetProperty("mode");
-            doc["data"]["mode"] = property->GetValue();
-            property = node->GetProperty("color");
-            doc["data"]["color"] = property->GetValue();
-            property = node->GetProperty("rotation");
-            doc["data"]["rotation"] = property->GetValue().toInt();
-            property = node->GetProperty("speed");
-            doc["data"]["speed"] = property->GetValue().toInt();
-            property = node->GetProperty("text");
-            doc["data"]["text"] = property->GetValue();
-
-            doc["data"]["states"] = node->GetModes();
-            String response;
-            serializeJson(doc, response);
-            Serial.println(response);
-            request->send(200, "application/json", response);
+    server_->on("/settings", HTTP_POST, [this](AsyncWebServerRequest *request) {
+        OnRequestWithAuth(request, [this](AsyncWebServerRequest *request) {
+            ApplyLentaSettings(request);
         });
     });
 
@@ -440,7 +533,10 @@ void WebServer::SetupWebServer() {
         [this](AsyncWebServerRequest *request, const String &filename, size_t index, uint8_t *data, size_t len,
                bool final) { OnFirmwareUpload(request, filename, index, data, len, final); });
 
-    server_->onNotFound([](AsyncWebServerRequest *request) { request->send(404); });
+    server_->onNotFound([this](AsyncWebServerRequest *request) {
+        if (TryServeStaticAsset(request)) return;
+        request->send(404);
+    });
 
     server_->begin();
 }

@@ -14,7 +14,13 @@ static bool IsValidRotation(uint16_t rotation) {
 
 Lenta::Lenta(const char* name, const char* id, Device* device) : Node(name, id, device) {
     bool settings_changed = false;
-    if (!ReadSettings("/lentaconf.txt", reinterpret_cast<byte*>(&ls), sizeof(ls))) {
+    VersionedLsSettings persisted_settings = {};
+    if (ReadSettings(kLentaSettingsPath_, reinterpret_cast<byte*>(&persisted_settings), sizeof(persisted_settings)) &&
+        persisted_settings.version_ == kLentaSettingsVersion_) {
+        ls = persisted_settings.settings_;
+    } else if (ReadSettings(kLegacyLentaSettingsPath_, reinterpret_cast<byte*>(&ls), sizeof(ls))) {
+        settings_changed = true;
+    } else {
         ls.brightness_ = kDefaultBrigthness_;
         ls.state_ = true;
         ls.mode_ = FIRE;
@@ -27,6 +33,14 @@ Lenta::Lenta(const char* name, const char* id, Device* device) : Node(name, id, 
         kDefaultText_.toCharArray(ls.text_, kDefaultText_.length() + 1);
         settings_changed = true;
     }
+    if (!IsValidMode(ls.mode_)) {
+        ls.mode_ = FIRE;
+        settings_changed = true;
+    }
+    if (ls.quantity_ != kDefaultLedsQuantity_) {
+        ls.quantity_ = kDefaultLedsQuantity_;
+        settings_changed = true;
+    }
     if (!IsValidRotation(ls.rotation_) || ls.rotation_ == kPreviousDefaultRotation_) {
         ls.rotation_ = kDefaultRotation_;
         settings_changed = true;
@@ -35,6 +49,7 @@ Lenta::Lenta(const char* name, const char* id, Device* device) : Node(name, id, 
         ls.speed_ = kDefaultSpeed_;
         settings_changed = true;
     }
+    ls.text_[TEXT_MAX_LENGTH - 1] = '\0';
     if (settings_changed) SaveLentaSettings();
 
     leds_ptr_ = new CRGB[ls.quantity_];
@@ -82,7 +97,7 @@ void Lenta::HandleCurrentState() {
     if (button_.isPress()) {
         if (++ls.mode_ > modes_.size() - 1) ls.mode_ = 0;
 
-        String state_in_string = modes_.find(ls.mode_)->second;
+        String state_in_string = modes_.find(ls.mode_)->second.name;
         properties_.find("mode")->second->SetValue(state_in_string);
         new_ls_state_ = NEW_MODE;
     }
@@ -101,7 +116,7 @@ void Lenta::HandleCurrentState() {
     if (properties_.find("mode")->second->HasNewValue()) {
         String mode_buffer = properties_.find("mode")->second->GetValue();
         for (auto it = modes_.begin(); it != modes_.end(); ++it) {
-            if (it->second == mode_buffer) {
+            if (String(it->second.name) == mode_buffer) {
                 ls.mode_ = it->first;
             }
         }
@@ -283,11 +298,15 @@ void Lenta::Barber() {
 String Lenta::GetModes() {
     String ModeFormatValue = "";
     for (auto it = modes_.begin(); it != modes_.end(); ++it) {
-        ModeFormatValue += it->second;
+        ModeFormatValue += it->second.name;
         ModeFormatValue += ",";
     }
     return ModeFormatValue.substring(0, ModeFormatValue.length() - 1);
 }
+
+const std::map<uint8_t, Lenta::ModeMetadata>& Lenta::GetModeMetadata() const { return modes_; }
+
+bool Lenta::IsValidMode(uint8_t mode_num) const { return modes_.find(mode_num) != modes_.end(); }
 
 bool Lenta::LoadLentaSettings() {
     String state_in_string = ls.state_ ? "true" : "false";
@@ -295,7 +314,7 @@ bool Lenta::LoadLentaSettings() {
     properties_.find("state")->second->SetValue(state_in_string);
     properties_.find("state")->second->SetHasNewValue(false);
 
-    state_in_string = modes_.find(ls.mode_)->second;
+    state_in_string = modes_.find(ls.mode_)->second.name;
     properties_.find("mode")->second->SetValue(state_in_string);
     properties_.find("mode")->second->SetHasNewValue(false);
 
@@ -321,9 +340,9 @@ bool Lenta::LoadLentaSettings() {
 }
 
 void Lenta::PublishMode(uint8_t mode_num) {
-    if (mode_num > modes_.size() - 1) return;
+    if (!IsValidMode(mode_num)) return;
     ls.mode_ = mode_num;
-    String state_in_string = modes_.find(ls.mode_)->second;
+    String state_in_string = modes_.find(ls.mode_)->second.name;
     properties_.find("mode")->second->SetValue(state_in_string);
 }
 
@@ -347,7 +366,10 @@ uint8_t Lenta::GetAnimationDelay() {
     return map(ls.speed_, 1, 100, 30, 1);
 }
 
-bool Lenta::SaveLentaSettings() { return WriteSettings("/lentaconf.txt", reinterpret_cast<byte*>(&ls), sizeof(ls)); }
+bool Lenta::SaveLentaSettings() {
+    VersionedLsSettings persisted_settings = {kLentaSettingsVersion_, ls};
+    return WriteSettings(kLentaSettingsPath_, reinterpret_cast<byte*>(&persisted_settings), sizeof(persisted_settings));
+}
 
 void Lenta::Parts() {
     if (!effTmr.isReady()) return;
