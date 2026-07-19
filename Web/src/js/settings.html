@@ -6,6 +6,8 @@
     let speedid;
     let colorid;
     let colorSettingRow;
+    let textid;
+    let textSettingRow;
     let rotationid;
     let settingsLoaded = false;
     let saveTimer;
@@ -18,6 +20,8 @@
         speedid = document.getElementById('speedid');
         colorid = document.getElementById('colorid');
         colorSettingRow = document.getElementById('colorSettingRow');
+        textid = document.getElementById('textid');
+        textSettingRow = document.getElementById('textSettingRow');
         rotationid = document.getElementById('rotationid');
 
         bindAutoApply();
@@ -34,6 +38,8 @@
         rotationid.onchange = () => saveSettings();
         colorid.oninput = () => scheduleSave();
         colorid.onchange = () => saveSettings();
+        textid.oninput = () => scheduleSave();
+        textid.onchange = () => saveSettings();
         brightnessid.oninput = () => scheduleSave();
         brightnessid.onchange = () => saveSettings();
         speedid.oninput = () => scheduleSave();
@@ -55,7 +61,8 @@
         const brightness = brightnessid?.value;
         const speed = speedid?.value;
         const rotation = rotationid?.value || 270;
-        const data = `state=${relayState}&mode=${mode}&r=${color[0]}&g=${color[1]}&b=${color[2]}&brightness=${brightness}&rotation=${rotation}&speed=${speed}`;
+        const text = encodeURIComponent(textid?.value || '');
+        const data = `state=${relayState}&mode=${mode}&r=${color[0]}&g=${color[1]}&b=${color[2]}&brightness=${brightness}&rotation=${rotation}&speed=${speed}&text=${text}`;
 
         request(`update?${data}`, { method: 'GET', onSuccess: () => {} });
     }
@@ -65,6 +72,7 @@
         if (relayid) relayid.checked = !!obj?.data?.state;
         if (modeid) modeid.value = obj?.data?.mode;
         if (colorid) colorid.value = rgbToHex(obj?.data?.color) || '#035F59';
+        if (textid) textid.value = obj?.data?.text || '';
         if (brightnessid) brightnessid.value = obj?.data?.brightness;
         if (speedid) speedid.value = obj?.data?.speed || 50;
         if (rotationid) rotationid.value = String(obj?.data?.rotation ?? 270);
@@ -96,6 +104,9 @@
     function updateVisibleParameters(mode) {
         if (colorSettingRow) {
             colorSettingRow.style.display = usesColor(mode) ? '' : 'none';
+        }
+        if (textSettingRow) {
+            textSettingRow.style.display = (mode || '').toLowerCase() === 'text' ? '' : 'none';
         }
     }
 

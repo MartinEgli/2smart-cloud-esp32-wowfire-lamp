@@ -390,6 +390,10 @@ void WebServer::SetupWebServer() {
                 property = node->GetProperty("speed");
                 property->SetValue(request->getParam("speed")->value());
             }
+            if (request->hasParam("text")) {
+                property = node->GetProperty("text");
+                property->SetValue(request->getParam("text")->value());
+            }
 
             request->send(200, "text/plain", "OK");
         });
@@ -400,7 +404,7 @@ void WebServer::SetupWebServer() {
             Serial.println("in settings");
             Lenta *node = static_cast<Lenta *>(device_->GetNode("lenta"));
             Property *property = node->GetProperty("brightness");
-            StaticJsonDocument<256> doc;
+            StaticJsonDocument<384> doc;
 
             doc["data"]["brightness"] = property->GetValue().toInt();
             property = node->GetProperty("state");
@@ -413,6 +417,8 @@ void WebServer::SetupWebServer() {
             doc["data"]["rotation"] = property->GetValue().toInt();
             property = node->GetProperty("speed");
             doc["data"]["speed"] = property->GetValue().toInt();
+            property = node->GetProperty("text");
+            doc["data"]["text"] = property->GetValue();
 
             doc["data"]["states"] = node->GetModes();
             String response;
