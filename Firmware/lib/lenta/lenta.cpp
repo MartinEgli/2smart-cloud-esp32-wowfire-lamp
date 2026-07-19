@@ -24,6 +24,7 @@ Lenta::Lenta(const char* name, const char* id, Device* device) : Node(name, id, 
         kDefaultText_.toCharArray(ls.text_, kDefaultText_.length() + 1);
     }
     if (!IsValidRotation(ls.rotation_)) ls.rotation_ = 0;
+    if (ls.speed_ < 1 || ls.speed_ > 100) ls.speed_ = kDefaultSpeed_;
 
     leds_ptr_ = new CRGB[ls.quantity_];
     FastLED.addLeds<WS2812, DATA_PIN, GRB>(leds_ptr_, ls.quantity_).setCorrection(TypicalLEDStrip);
@@ -123,6 +124,11 @@ void Lenta::HandleCurrentState() {
         properties_.find("rotation")->second->SetHasNewValue(false);
         new_ls_state_ = NEW_ROTATION;
     }
+    if (properties_.find("speed")->second->HasNewValue()) {
+        SetSpeed(properties_.find("speed")->second->GetValue().toInt());
+        properties_.find("speed")->second->SetHasNewValue(false);
+        new_ls_state_ = NEW_SPEED;
+    }
 
     switch (new_ls_state_) {
         case NEW_BRIGHTNESS:
@@ -134,6 +140,7 @@ void Lenta::HandleCurrentState() {
     }
 
     if (ls.state_) {
+        effTmr.setInterval(GetEffectInterval());
         switch (ls.mode_) {
             case COLOR:
                 if (new_ls_state_ == NO_CHANGES) break;
@@ -201,7 +208,7 @@ void Lenta::Rainbow() {
     }
     counter_++;  // 0 to 255 (byte data type)
     FastLED.show();
-    delay(10);  // moving speed
+    delay(GetAnimationDelay());
 }
 
 void Lenta::Hameleon() {
@@ -211,7 +218,7 @@ void Lenta::Hameleon() {
     }
     counter_++;  // 0 to 255 (byte data type)
     FastLED.show();
-    delay(10);  // moving speed
+    delay(GetAnimationDelay());
 }
 
 void Lenta::ExtractColor(String color_string) {
@@ -236,7 +243,7 @@ void Lenta::Disco() {
         leds_ptr_[i] = (random_bool < 5) ? CRGB::White : CRGB::Black;
     }
     LEDS.show();
-    delay(random_delay);
+    delay(map(ls.speed_, 1, 100, random_delay * 2, 1));
 }
 
 String Lenta::GetModes() {
@@ -273,6 +280,9 @@ bool Lenta::LoadLentaSettings() {
     properties_.find("rotation")->second->SetValue(String(ls.rotation_));
     properties_.find("rotation")->second->SetHasNewValue(false);
 
+    properties_.find("speed")->second->SetValue(String(ls.speed_));
+    properties_.find("speed")->second->SetHasNewValue(false);
+
     return true;
 }
 
@@ -289,6 +299,18 @@ void Lenta::SetRotation(uint16_t rotation) {
     if (!IsValidRotation(rotation)) rotation = 0;
     if (ls.rotation_ == rotation) return;
     ls.rotation_ = rotation;
+}
+
+void Lenta::SetSpeed(uint8_t speed) {
+    ls.speed_ = constrain(speed, 1, 100);
+}
+
+uint16_t Lenta::GetEffectInterval() {
+    return map(ls.speed_, 1, 100, 300, 20);
+}
+
+uint8_t Lenta::GetAnimationDelay() {
+    return map(ls.speed_, 1, 100, 30, 1);
 }
 
 bool Lenta::SaveLentaSettings() { return WriteSettings("/lentaconf.txt", reinterpret_cast<byte*>(&ls), sizeof(ls)); }
@@ -575,7 +597,7 @@ bool Lenta::fillString(const char* text, CRGB letterColor, boolean itsText) {
         loading = false;
     }
 
-    if (millis() - scrollTimer >= 300 /* modes[EFF_TEXT].Speed */) {
+    if (millis() - scrollTimer >= map(ls.speed_, 1, 100, 600, 60)) {
         scrollTimer = millis();
         FastLED.clear();
         uint8_t i = 0, j = 0;

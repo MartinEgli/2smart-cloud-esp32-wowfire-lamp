@@ -61,9 +61,10 @@ class Lenta : public Node {
         uint16_t quantity_;
         char text_[TEXT_MAX_LENGTH];
         uint16_t rotation_;
+        uint8_t speed_;
     } LsSettings;
 
-    enum LsNewState { NO_CHANGES, NEW_COLOR, NEW_BRIGHTNESS, NEW_MODE, NEW_TEXT, NEW_ROTATION };
+    enum LsNewState { NO_CHANGES, NEW_COLOR, NEW_BRIGHTNESS, NEW_MODE, NEW_TEXT, NEW_ROTATION, NEW_SPEED };
     enum LedStripStates {
         RAINBOW,
         COLOR,
@@ -92,6 +93,9 @@ class Lenta : public Node {
     void TextRunning();
     void ExtractColor(String color_string);
     void SetRotation(uint16_t rotation);
+    void SetSpeed(uint8_t speed);
+    uint16_t GetEffectInterval();
+    uint8_t GetAnimationDelay();
 
     bool SaveLentaSettings();
     bool LoadLentaSettings();
@@ -105,6 +109,7 @@ class Lenta : public Node {
     const uint8_t kDefaultColorR_ = 50;
     const uint8_t kDefaultColorG_ = 200;
     const uint8_t kDefaultColorB_ = 200;
+    const uint8_t kDefaultSpeed_ = 50;
     const uint16_t kDefaultLedsQuantity_ = length_ * width_;
     const uint16_t kSaveLentaSettingsTime_ = 5 * 1000;  // 5s
     String kDefaultText_ = "2Smart";
@@ -144,7 +149,8 @@ class Lenta : public Node {
     EncButton<EB_TICK, 19> button_;
 
     LsSettings ls = {
-        true, FIRE, kDefaultBrigthness_, kDefaultColorR_, kDefaultColorG_, kDefaultColorB_, kDefaultLedsQuantity_, "", 0};
+        true, FIRE, kDefaultBrigthness_, kDefaultColorR_, kDefaultColorG_, kDefaultColorB_, kDefaultLedsQuantity_, "", 0,
+        kDefaultSpeed_};
 
     // ====================================================================================================================
 
