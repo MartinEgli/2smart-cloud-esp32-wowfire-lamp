@@ -31,6 +31,8 @@
             "credentials.productId": "Product ID",
             "credentials.title": "Credentials",
             "credentials.token": "Token *",
+            "language.english": "English",
+            "language.german": "Deutsch",
             "nav.credentials": "Credentials",
             "nav.settings": "Settings",
             "nav.system": "System",
@@ -53,6 +55,7 @@
             "system.chooseFile": "Choose file",
             "system.currentVersion": "Current version: {value}",
             "system.device": "Device",
+            "system.language": "Language",
             "system.stepClick": "Click \"Update\" button",
             "system.stepSelect": "Select file with new firmware",
             "system.stepWait": "Wait until update",
@@ -104,6 +107,8 @@
             "credentials.productId": "Produkt-ID",
             "credentials.title": "Zugangsdaten",
             "credentials.token": "Token *",
+            "language.english": "English",
+            "language.german": "Deutsch",
             "nav.credentials": "Zugang",
             "nav.settings": "Einstellungen",
             "nav.system": "System",
@@ -126,6 +131,7 @@
             "system.chooseFile": "Datei auswaehlen",
             "system.currentVersion": "Aktuelle Version: {value}",
             "system.device": "Geraet",
+            "system.language": "Sprache",
             "system.stepClick": "\"Update\"-Button klicken",
             "system.stepSelect": "Datei mit neuer Firmware auswaehlen",
             "system.stepWait": "Warten, bis das Update abgeschlossen ist",
@@ -221,6 +227,17 @@
         });
     }
 
+    function bindMenuToggle() {
+        const button = document.getElementById('menuToggle');
+        const header = document.getElementById('header');
+        if (!button || !header) return;
+
+        button.onclick = () => {
+            const isOpen = header.classList.toggle('show');
+            button.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
+        };
+    }
+
     function request(url, { method, body, onSuccess, onError }) {
         const hostname = '';
         switch(method) {
@@ -259,6 +276,7 @@
         }
     }
     locationDetector();
+    bindMenuToggle();
     applyI18n();
     applyTheme();
 </script>

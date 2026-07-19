@@ -11884,15 +11884,22 @@
     }
 
     .language-select {
-        margin-right: 20px;
         min-width: 64px;
         height: 32px;
-        border: 1px solid rgba(255, 255, 255, 0.65);
         border-radius: 0.35rem;
-        background-color: var(--primary);
-        color: var(--white);
         font-weight: 700;
         text-align: center;
+    }
+
+    .navbar-expand .menu-toggle {
+        display: none;
+        width: 42px;
+        height: 42px;
+        align-items: center;
+        justify-content: center;
+        margin-left: auto;
+        border: 1px solid rgba(255, 255, 255, 0.45);
+        border-radius: 0.35rem;
     }
 
     .disabledBtn {
@@ -11922,22 +11929,26 @@
             margin: 4px 8px 6px 4px;
         }
 
-        .language-select {
-            margin: 4px 0 6px 8px;
-            min-width: 58px;
-            height: 36px;
+        .navbar-expand .menu-toggle {
+            display: flex;
         }
 
         .navbar-collapse {
             flex-basis: 100%;
             flex-grow: 1;
-            overflow-x: auto;
-            -webkit-overflow-scrolling: touch;
+            overflow: hidden;
+            max-height: 0;
+            transition: max-height 0.18s ease, padding-top 0.18s ease;
+        }
+
+        .navbar-collapse.show {
+            max-height: 240px;
+            padding-top: 8px;
         }
 
         .navbar-nav {
-            flex-direction: row;
-            width: max-content;
+            flex-direction: column;
+            width: 100%;
             min-width: 100%;
             gap: 6px;
             padding: 4px 0 2px;
@@ -11945,10 +11956,10 @@
 
         .topbar .nav-item .nav-link,
         .topbar.navbar-dark .navbar-nav .nav-item .nav-link {
-            height: 38px;
-            min-width: 78px;
+            height: 42px;
+            width: 100%;
             padding: 0 12px;
-            justify-content: center;
+            justify-content: flex-start;
             border-radius: 0.35rem;
             background-color: rgba(255, 255, 255, 0.14);
             white-space: nowrap;
