@@ -2,29 +2,58 @@
     let relayid;
     let modeid;
     let options;
-    window.onload = () => {
-        getSettingsJSON();
+    let brightnessid;
+    let speedid;
+    let colorid;
+    let rotationid;
+    let settingsLoaded = false;
+    let saveTimer;
 
+    window.onload = () => {
         relayid = document.getElementById('stateToggleid');
         modeid = document.getElementById('selectModeid');
         brightnessid = document.getElementById('brightnessid');
         speedid = document.getElementById('speedid');
         colorid = document.getElementById('colorid');
         rotationid = document.getElementById('rotationid');
-        saveSettingsBtnid = document.getElementById('saveSettingsBtnid');
-        saveSettingsBtnid.onclick = saveSettings;
+
+        bindAutoApply();
+        getSettingsJSON();
+    }
+
+    function bindAutoApply() {
+        relayid.onchange = () => saveSettings();
+        modeid.onchange = () => {
+            updateSelectedPreview(modeid.value);
+            saveSettings();
+        };
+        rotationid.onchange = () => saveSettings();
+        colorid.oninput = () => scheduleSave();
+        colorid.onchange = () => saveSettings();
+        brightnessid.oninput = () => scheduleSave();
+        brightnessid.onchange = () => saveSettings();
+        speedid.oninput = () => scheduleSave();
+        speedid.onchange = () => saveSettings();
+    }
+
+    function scheduleSave() {
+        clearTimeout(saveTimer);
+        saveTimer = setTimeout(saveSettings, 250);
     }
 
     function saveSettings() {
+        if (!settingsLoaded || !options?.length) return;
+        clearTimeout(saveTimer);
         const relayState = relayid.checked ? 1 : 0;
-        const mode = options.indexOf(modeid?.value?.trim()) || 0;
+        const modeIndex = options.indexOf(modeid?.value?.trim());
+        const mode = modeIndex >= 0 ? modeIndex : 0;
         const color = hexToRgb(colorid.value).split(',');
         const brightness = brightnessid?.value;
         const speed = speedid?.value;
         const rotation = rotationid?.value || 270;
         const data = `state=${relayState}&mode=${mode}&r=${color[0]}&g=${color[1]}&b=${color[2]}&brightness=${brightness}&rotation=${rotation}&speed=${speed}`;
 
-        request(`update?${data}`, { method: 'GET' });
+        request(`update?${data}`, { method: 'GET', onSuccess: () => {} });
     }
 
     function parseSettingsJSON(jsonstring) {
@@ -51,7 +80,7 @@
                 modeid.value = obj?.data?.mode;
             }
             fillModePreviews(options, modeid.value);
-            modeid.onchange = () => updateSelectedPreview(modeid.value);
+            settingsLoaded = true;
         }
     }
 
@@ -72,6 +101,7 @@
             button.onclick = () => {
                 modeid.value = mode;
                 updateSelectedPreview(mode);
+                saveSettings();
             };
 
             const sample = document.createElement('span');
