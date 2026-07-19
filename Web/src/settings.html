@@ -21,33 +21,47 @@
                     <div class="card-body">
                         <div class="row mt-3">
                             <span class="col-xs-12 col-sm-5 col-md-4 col-lg-3" data-i18n="settings.state">State</span>
-                            <label class="switch">
-                                <input type="checkbox" id="stateToggleid">
-                                <span class="slider round"></span>
-                            </label>
+                            <div class="setting-control">
+                                <label class="switch">
+                                    <input type="checkbox" id="stateToggleid">
+                                    <span class="slider round"></span>
+                                </label>
+                                <small class="field-hint" data-i18n="settings.stateHint">On or off</small>
+                            </div>
                         </div>
                         <div class="row mt-3">
                             <span class="col-xs-12 col-sm-5 col-md-4 col-lg-3" data-i18n="settings.color">Color</span>
-                            <input type="color" id="colorid">
+                            <div class="setting-control">
+                                <input type="color" id="colorid">
+                                <small class="field-hint" data-i18n="settings.colorHint">RGB color</small>
+                            </div>
                         </div>
                         <div class="row mt-3">
                             <span class="col-xs-12 col-sm-5 col-md-4 col-lg-3" data-i18n="settings.brightness">Brightness</span>
-                            <input type="range" min="0" max="100" value="50" id="brightnessid">
-                            <span class="range"></span>
+                            <div class="setting-control">
+                                <input type="range" min="0" max="100" value="50" id="brightnessid">
+                                <small class="field-hint" data-i18n="settings.brightnessHint">0-100</small>
+                            </div>
                         </div>
                         <div class="row mt-3">
                             <span class="col-xs-12 col-sm-5 col-md-4 col-lg-3" data-i18n="settings.mode">Mode</span>
-                            <select id="selectModeid">
-                            </select>
+                            <div class="setting-control">
+                                <select id="selectModeid">
+                                </select>
+                                <small class="field-hint" id="modeHint" data-i18n="settings.modeHint">Available modes are loaded from the device</small>
+                            </div>
                         </div>
                         <div class="row mt-3">
                             <span class="col-xs-12 col-sm-5 col-md-4 col-lg-3" data-i18n="settings.rotation">Rotation</span>
-                            <select id="rotationid">
-                                <option value="0">0</option>
-                                <option value="90">90</option>
-                                <option value="180">180</option>
-                                <option value="270">270</option>
-                            </select>
+                            <div class="setting-control">
+                                <select id="rotationid">
+                                    <option value="0">0</option>
+                                    <option value="90">90</option>
+                                    <option value="180">180</option>
+                                    <option value="270">270</option>
+                                </select>
+                                <small class="field-hint" data-i18n="settings.rotationHint">0, 90, 180, 270 degrees</small>
+                            </div>
                         </div>
                         <div class="saveSettingsBtn">
                             <input type="button" value="Save" id="saveSettingsBtnid" class="btn btn-primary btn-user" data-i18n-value="actions.save">

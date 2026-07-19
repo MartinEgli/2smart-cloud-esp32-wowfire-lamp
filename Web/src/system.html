@@ -75,11 +75,17 @@
                 </table>
                 <div class="row mt-4">
                     <span class="btn-label" data-i18n="system.username">Username</span>
-                    <input id="newUsername" class="form-control user-input" type="text" maxlength="16">
+                    <div class="setting-control">
+                        <input id="newUsername" class="form-control user-input" type="text" maxlength="16">
+                        <small class="field-hint" data-i18n="system.usernameHint">Max 16 characters</small>
+                    </div>
                 </div>
                 <div class="row mt-4">
                     <span class="btn-label" data-i18n="system.password">Password</span>
-                    <input id="newUserPassword" class="form-control user-input" type="password" maxlength="31">
+                    <div class="setting-control">
+                        <input id="newUserPassword" class="form-control user-input" type="password" maxlength="31">
+                        <small class="field-hint" data-i18n="system.passwordHint">Max 31 characters</small>
+                    </div>
                 </div>
                 <div class="row mt-4">
                     <span class="btn-label"></span>

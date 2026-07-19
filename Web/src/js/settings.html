@@ -34,6 +34,8 @@
         if (rotationid) rotationid.value = String(obj?.data?.rotation || 0);
         if (modeid) {
             options = obj?.data?.states?.split(',');
+            const modeHint = document.getElementById('modeHint');
+            if (modeHint && options?.length) modeHint.textContent = options.join(', ');
 
             for (const opt of options) {
                 const el = document.createElement("option");
