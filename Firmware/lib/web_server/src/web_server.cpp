@@ -271,10 +271,10 @@ void WebServer::SetupWebServer() {
         person_id = Sha256(person_mail);
         Serial.println("WebServer update:");
         Serial.println("SSID_Name = " + ssid_name);
-        Serial.println("SSID_Password = " + ssid_password);
+        Serial.println("SSID_Password = <hidden>");
         Serial.println("person_mail = " + person_mail);
         Serial.println("person_id = " + person_id);
-        Serial.println("token = " + token);
+        Serial.println("token = <hidden>");
         Serial.println("host = " + host);
         Serial.println("brport = " + broker_port);
         Serial.println("device_id = " + device_id);
@@ -294,7 +294,8 @@ void WebServer::SetupWebServer() {
 
     server_->on("/update", HTTP_GET, [this](AsyncWebServerRequest *request) {
         OnRequestWithAuth(request, [this](AsyncWebServerRequest *request) {
-            if (!request->hasParam("state") || !request->hasParam("brightness") || !request->hasParam("mode")) {
+            if (!request->hasParam("state") || !request->hasParam("brightness") || !request->hasParam("mode") ||
+                !request->hasParam("r") || !request->hasParam("g") || !request->hasParam("b")) {
                 request->send(400);
                 return;
             }
@@ -306,11 +307,9 @@ void WebServer::SetupWebServer() {
             property = node->GetProperty("state");
             property->SetValue(request->getParam("state")->value().toInt() ? "true" : "false");
 
-            uint8_t r_value, g_value, b_value = 0;
-
-            r_value = request->getParam("r")->value().toInt();
-            g_value = request->getParam("g")->value().toInt();
-            b_value = request->getParam("b")->value().toInt();
+            uint8_t r_value = request->getParam("r")->value().toInt();
+            uint8_t g_value = request->getParam("g")->value().toInt();
+            uint8_t b_value = request->getParam("b")->value().toInt();
 
             char message_buffer[12];  // length of RGB mess
 
