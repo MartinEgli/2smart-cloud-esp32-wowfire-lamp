@@ -100,7 +100,8 @@ bool WebServer::TryServeStaticAsset(AsyncWebServerRequest *request) {
 
     bool is_supported_asset = (path.startsWith("/styles.") && path.endsWith(".css")) ||
                               (path.startsWith("/favicon.") && path.endsWith(".png")) ||
-                              (path.startsWith("/logo.") && path.endsWith(".svg"));
+                              (path.startsWith("/logo.") && path.endsWith(".svg")) ||
+                              path.endsWith(".js");
     if (!is_supported_asset || !SPIFFS.exists(path)) return false;
 
     request->send(SPIFFS, path, GetStaticContentType(path));
