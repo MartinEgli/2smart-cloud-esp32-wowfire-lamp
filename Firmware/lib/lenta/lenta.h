@@ -93,7 +93,12 @@ class Lenta : public Node {
         TEXT,
         ICE_FIRE,
         FOREST_FIRE,
-        BARBER
+        BARBER,
+        RING_PULSE,
+        VORTEX,
+        LIGHTHOUSE,
+        METEOR_RAIN,
+        SNOWING
     };
 
     void TurnOffLs();
@@ -108,6 +113,11 @@ class Lenta : public Node {
     void DNAroutine();
     void TextRunning();
     void Barber();
+    void RingPulse();
+    void Vortex();
+    void Lighthouse();
+    void MeteorRain();
+    void Snowing();
     void ExtractColor(String color_string);
     void SetRotation(uint16_t rotation);
     void SetSpeed(uint8_t speed);
@@ -166,7 +176,12 @@ class Lenta : public Node {
         {TEXT, {"text", true, true, true, true}},
         {ICE_FIRE, {"ice fire", false, false, true, true}},
         {FOREST_FIRE, {"forest fire", false, false, true, true}},
-        {BARBER, {"barber", false, false, true, true}}
+        {BARBER, {"barber", false, false, true, true}},
+        {RING_PULSE, {"ring pulse", true, false, true, true}},
+        {VORTEX, {"vortex", true, false, true, true}},
+        {LIGHTHOUSE, {"lighthouse", true, false, true, true}},
+        {METEOR_RAIN, {"meteor rain", true, false, true, true}},
+        {SNOWING, {"snowing", false, false, true, true}}
     };
 
     EncButton<EB_TICK, 19> button_;

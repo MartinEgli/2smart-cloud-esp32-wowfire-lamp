@@ -12,6 +12,10 @@ static bool IsValidRotation(uint16_t rotation) {
     return rotation == 0 || rotation == 90 || rotation == 180 || rotation == 270;
 }
 
+static bool IsBlack(const CRGB &color) {
+    return color.r == 0 && color.g == 0 && color.b == 0;
+}
+
 Lenta::Lenta(const char* name, const char* id, Device* device) : Node(name, id, device) {
     bool settings_changed = false;
     VersionedLsSettings persisted_settings = {};
@@ -208,6 +212,21 @@ void Lenta::HandleCurrentState() {
             case BARBER:
                 Barber();
                 break;
+            case RING_PULSE:
+                RingPulse();
+                break;
+            case VORTEX:
+                Vortex();
+                break;
+            case LIGHTHOUSE:
+                Lighthouse();
+                break;
+            case METEOR_RAIN:
+                MeteorRain();
+                break;
+            case SNOWING:
+                Snowing();
+                break;
         }
     } else if (new_ls_state_) {
         TurnOffLs();
@@ -292,6 +311,115 @@ void Lenta::Barber() {
     }
 
     counter_++;
+    FastLED.show();
+}
+
+void Lenta::RingPulse() {
+    if (!effTmr.isReady()) return;
+
+    uint8_t active_ring = counter_ % length_;
+    for (uint8_t y = 0; y < length_; y++) {
+        uint8_t distance = abs((int)y - (int)active_ring);
+        uint8_t brightness = distance > 5 ? 0 : 255 - distance * 48;
+        CRGB color = CRGB(ls.red_, ls.green_, ls.blue_);
+        if (IsBlack(color)) color = CHSV(counter_ * 3 + y * 8, 210, 255);
+        color.nscale8_video(brightness);
+        for (uint8_t x = 0; x < width_; x++) {
+            setPix(x, y, color);
+        }
+    }
+
+    counter_++;
+    FastLED.show();
+}
+
+void Lenta::Vortex() {
+    if (!effTmr.isReady()) return;
+
+    CRGB base_color = CRGB(ls.red_, ls.green_, ls.blue_);
+    bool use_rainbow = IsBlack(base_color);
+    for (uint8_t y = 0; y < length_; y++) {
+        for (uint8_t x = 0; x < width_; x++) {
+            uint8_t phase = (x * 2 + y * 3 + counter_) % 32;
+            uint8_t brightness = phase < 8 ? 255 - phase * 24 : 24;
+            CRGB color = use_rainbow ? CHSV(counter_ * 2 + y * 10 + x * 4, 240, brightness) : base_color;
+            if (!use_rainbow) color.nscale8_video(brightness);
+            setPix(x, y, color);
+        }
+    }
+
+    counter_++;
+    FastLED.show();
+}
+
+void Lenta::Lighthouse() {
+    if (!effTmr.isReady()) return;
+
+    uint8_t beam = counter_ % width_;
+    CRGB beam_color = CRGB(ls.red_, ls.green_, ls.blue_);
+    if (IsBlack(beam_color)) beam_color = CRGB(255, 245, 200);
+    for (uint8_t y = 0; y < length_; y++) {
+        for (uint8_t x = 0; x < width_; x++) {
+            uint8_t distance = abs((int)x - (int)beam);
+            uint8_t wrapped_distance = width_ - distance;
+            if (wrapped_distance < distance) distance = wrapped_distance;
+            uint8_t brightness = distance > 4 ? 0 : 255 - distance * 55;
+            CRGB color = beam_color;
+            color.nscale8_video(brightness);
+            setPix(x, y, color);
+        }
+    }
+
+    counter_++;
+    FastLED.show();
+}
+
+void Lenta::MeteorRain() {
+    if (!effTmr.isReady()) return;
+
+    for (uint8_t x = 0; x < width_; x++) {
+        for (int8_t y = length_ - 1; y > 0; y--) {
+            CRGB color = leds_ptr_[getPix(x, y - 1)];
+            color.fadeToBlackBy(55);
+            setPix(x, y, color);
+        }
+        setPix(x, 0, CRGB::Black);
+    }
+
+    uint8_t drops = map(ls.speed_, 1, 100, 1, 4);
+    for (uint8_t i = 0; i < drops; i++) {
+        if (random8() < map(ls.speed_, 1, 100, 35, 120)) {
+            CRGB meteor_color = CRGB(ls.red_, ls.green_, ls.blue_);
+            if (IsBlack(meteor_color)) meteor_color = CRGB(255, 80, 40);
+            setPix(random8(width_), 0, meteor_color);
+        }
+    }
+
+    FastLED.show();
+}
+
+void Lenta::Snowing() {
+    if (!effTmr.isReady()) return;
+
+    for (uint8_t x = 0; x < width_; x++) {
+        for (int8_t y = length_ - 1; y > 0; y--) {
+            int8_t drift = random8(3) - 1;
+            int8_t source_x = x + drift;
+            if (source_x < 0) source_x = width_ - 1;
+            if (source_x >= width_) source_x = 0;
+
+            CRGB color = leds_ptr_[getPix(source_x, y - 1)];
+            color.fadeToBlackBy(35);
+            setPix(x, y, color);
+        }
+        setPix(x, 0, CRGB::Black);
+    }
+
+    if (random8() < map(ls.speed_, 1, 100, 40, 110)) {
+        CRGB snow_color = CHSV(150 + random8(25), 30 + random8(50), 180 + random8(75));
+        setPix(random8(width_), 0, snow_color);
+    }
+
     FastLED.show();
 }
 
