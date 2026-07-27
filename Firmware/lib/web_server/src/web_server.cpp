@@ -186,7 +186,7 @@ void WebServer::SendLentaSettings(AsyncWebServerRequest *request) {
     Serial.println("in settings");
     Lenta *node = static_cast<Lenta *>(device_->GetNode("lenta"));
     Property *property = node->GetProperty("brightness");
-    StaticJsonDocument<1536> doc;
+    StaticJsonDocument<4096> doc;
 
     doc["data"]["brightness"] = property->GetValue().toInt();
     property = node->GetProperty("state");
